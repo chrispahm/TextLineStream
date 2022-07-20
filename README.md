@@ -3,6 +3,8 @@
 Transform a stream into a stream where each chunk is divided by a newline,
 be it `\n` or `\r\n`. `\r` can be enabled via the `allowCR` option.
 
+Returning empty lines can be enabled using the `returnEmptyLines` option.
+
 This is a slightly extended version of [Deno's TextLineStream](https://doc.deno.land/https://deno.land/std@0.141.0/streams/mod.ts/~/TextLineStream).
 
  ```js

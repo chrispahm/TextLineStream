@@ -16,6 +16,7 @@
 export default class TextLineStream extends TransformStream {
   #buf = "";
   #allowCR = false;
+  #returnEmptyLines = false;
   #mapperFun = line => line;
   
   constructor(options) {
@@ -25,6 +26,7 @@ export default class TextLineStream extends TransformStream {
     });
     
     this.#allowCR = options?.allowCR ?? false;
+    this.#returnEmptyLines = options?.returnEmptyLines ?? false;
     this.#mapperFun = options?.mapperFun ?? this.#mapperFun;
   }
 
@@ -41,7 +43,10 @@ export default class TextLineStream extends TransformStream {
           crIndex !== -1 && crIndex !== (chunk.length - 1) &&
           (lfIndex === -1 || (lfIndex - 1) > crIndex)
         ) {
-          controller.enqueue(this.#mapperFun(chunk.slice(0, crIndex)));
+          const curChunk = chunk.slice(0, crOrLfIndex)
+          if (this.#returnEmptyLines || curChunk.length) {            
+            controller.enqueue(this.#mapperFun(curChunk));
+          }
           chunk = chunk.slice(crIndex + 1);
           continue;
         }
@@ -52,7 +57,10 @@ export default class TextLineStream extends TransformStream {
         if (chunk[lfIndex - 1] === "\r") {
           crOrLfIndex--;
         }
-        controller.enqueue(this.#mapperFun(chunk.slice(0, crOrLfIndex)));
+        const curChunk = chunk.slice(0, crOrLfIndex)
+        if (this.#returnEmptyLines || curChunk.length) {          
+          controller.enqueue(this.#mapperFun(curChunk));
+        }
         chunk = chunk.slice(lfIndex + 1);
         continue;
       }

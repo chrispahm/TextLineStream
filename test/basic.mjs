@@ -1,8 +1,4 @@
 import { test } from 'tap'
-import { readFileSync } from 'fs'
-import { open } from 'node:fs/promises';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import TextLineStream from '../dist/textlinestream.es.mjs'
 
 function concatArray() {
@@ -123,4 +119,38 @@ test('split lines windows-style', async function (t) {
     t.same(list, ['hello', 'world']);
     t.end();
   } 
+})
+
+test('do not return empty lines (default)', async function (t) {
+  const {readable, writable} =  new TextLineStream()
+    
+  const readStream = readable
+    .pipeThrough(concatArray())      
+
+  const writer = writable.getWriter();
+  writer.write('hello\n\nworld');
+  writer.close();
+  
+  for await (const list of readStream) {
+    t.same(list, ['hello', 'world']);
+    t.end();
+  }
+})
+
+test('return empty lines - returnEmptyLines option', async function (t) {
+  const {readable, writable} =  new TextLineStream({
+    returnEmptyLines: true
+  })
+    
+  const readStream = readable
+    .pipeThrough(concatArray())      
+
+  const writer = writable.getWriter();
+  writer.write('hello\n\nworld');
+  writer.close();
+  
+  for await (const list of readStream) {
+    t.same(list, ['hello', '', 'world']);
+    t.end();
+  }
 })
